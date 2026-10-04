@@ -131,6 +131,10 @@ select{font:inherit;font-size:16px;color:var(--tx);background:var(--bg);border:1
 .sw{position:relative;overflow:hidden}.sw .er{background:var(--bg);position:relative;touch-action:pan-y;cursor:pointer;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
 .sw-del{position:absolute;right:0;top:0;bottom:0;width:84px;display:flex}.sw-del button{flex:1;border:0;border-radius:0;background:#d64545;color:#fff}
 .cats{display:flex;flex-wrap:wrap;gap:6px}.cc{display:inline-flex;align-items:center;gap:6px;border-radius:16px;padding:6px 12px}.cc.on{border-color:var(--ac);background:var(--bg);box-shadow:0 0 0 1px var(--ac) inset}
+
+#b-cats{padding-bottom:4px}.cxr{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.capt{font-size:11px;color:var(--mu);padding:4px 0 10px}
+.cx{flex:none;display:inline-flex;align-items:center;gap:6px;border-radius:16px;padding:4px 11px;font-size:12px;transition:opacity .2s;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}.cx.off{opacity:.4;text-decoration:line-through}.cx.add,.cc.add{border-style:dashed;color:var(--mu)}
+.er .ex{min-width:0}.er .ex small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style></head><body>
 <header><div><h1>Bali Itinerary</h1><div class="sub">Oct 3 – Oct 12<button id="sdot" class="sdot bad" onclick="openSheet('s-sync')" aria-label="Sync status"></button></div></div>
 <div id="hi" style="margin-left:auto"><button class="ib" onclick="goToday()" title="Today" aria-label="Jump to today"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button></div></header>
@@ -145,18 +149,18 @@ select{font:inherit;font-size:16px;color:var(--tx);background:var(--bg);border:1
 <div id="bd" style="display:none">
 <div class="bhead"><div class="btop"><div class="blabel" id="b-label">Trip total</div><div class="seg"><button id="bc-IDR" onclick="setCur('IDR')">IDR</button><button id="bc-AUD" onclick="setCur('AUD')">AUD</button></div></div>
 <div class="bbig" id="b-big"></div><div class="bsub" id="b-sub"></div><div id="b-lim"></div></div>
-<div id="b-chips"></div><div class="bsec" id="b-sum"></div><div class="bsec" id="b-days"></div><div class="bsec" id="b-list"></div></div>
+<div id="b-chips"></div><div id="b-cats"></div><div class="bsec" id="b-sum"></div><div class="bsec" id="b-days"></div><div class="bsec" id="b-list"></div></div>
 <div id="fabs"><button class="ib fab" onclick="fxToggle()" title="Currency" aria-label="Currency converter"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 6.5C16 5 14 4.5 12 4.5c-3 0-5 1.5-5 3.5s2 3 5 3.5 5 1.5 5 3.5-2 3.5-5 3.5c-2 0-4-.5-5-2"/></svg></button><button id="fab-add" class="ib fab pri" onclick="fabAdd()" title="Add" aria-label="Add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
 <div class="modal" id="modal" style="display:none"><div class="mc"><b>Add entry</b><label>Date</label><select id="m-d"></select><label>Time</label><input type="text" id="m-t" placeholder="e.g. 9:30am"><label>Activity</label><input type="text" id="m-x" placeholder="What's happening?">
 <div class="mb"><button onclick="closeM()">Cancel</button><button class="pri" onclick="addEntry()">Add</button></div></div></div>
 <div id="bk" onclick="closeSheets()"></div>
-<div class="sheet" id="s-entry"></div><div class="sheet" id="s-day"></div><div class="sheet" id="s-exp"></div><div class="sheet" id="s-lim"></div>
+<div class="sheet" id="s-entry"></div><div class="sheet" id="s-day"></div><div class="sheet" id="s-exp"></div><div class="sheet" id="s-lim"></div><div class="sheet" id="s-cat"></div>
 <div class="sheet" id="s-sync"><div class="grab"></div><b>Sync</b><div class="sub" id="stat" style="margin:4px 0 6px">Not synced</div>
 <label class="fl">Google Apps Script link</label><input type="text" id="u" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Paste Google Apps Script URL (ends in /exec)">
 <div class="acts"><button onclick="pull(true)">Sync now</button><button class="pri" onclick="saveUrl()">Save &amp; sync</button></div></div>
 <div class="ver" id="ver"></div>
 <script>
-const APP_VERSION="1.9.0";
+const APP_VERSION="1.10.0";
 document.getElementById("ver").textContent="v"+APP_VERSION;
 const D=(d,date,loc,area,color,items)=>({d,date,loc,area,color,items:items.map(i=>({t:i[0],x:i[1],p:i[2]||[],b:i[3]||0}))});
 const DEF=[
@@ -227,16 +231,16 @@ try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!Array.isArray(S))S=JSON.parse(JSON.stringify(DEF));
 let url="";try{url=localStorage.getItem("bali-sheet-url")||""}catch(e){}
 const setStat=t=>{const e=document.getElementById("stat");if(e)e.textContent=t;const d=document.getElementById("sdot");if(d){d.className="sdot "+(/Synced/.test(t)?"ok":/Saving|Checking|Refresh|Upload|Download/.test(t)?"busy":"bad");d.title=t}};
-let at=0,tm=null,busy=false,view="it",openN=null,B=[],LIM=0;try{B=JSON.parse(localStorage.getItem("bali-budget"))}catch(e){}if(!Array.isArray(B))B=[];try{at=+localStorage.getItem("bali-at")||0}catch(e){}
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(S));localStorage.setItem("bali-at",at);localStorage.setItem("bali-budget",JSON.stringify(B));localStorage.setItem("bali-limit",LIM)}catch(e){}}
+let at=0,tm=null,busy=false,view="it",openN=null,B=[],LIM=0,CUS=[];try{B=JSON.parse(localStorage.getItem("bali-budget"))}catch(e){}if(!Array.isArray(B))B=[];try{at=+localStorage.getItem("bali-at")||0}catch(e){}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(S));localStorage.setItem("bali-at",at);localStorage.setItem("bali-budget",JSON.stringify(B));localStorage.setItem("bali-limit",LIM);localStorage.setItem("bali-cats",JSON.stringify(CUS))}catch(e){}}
 function save(){at=Date.now();persist();clearTimeout(tm);if(url){setStat("Saving…");tm=setTimeout(()=>{tm=null;push()},1500)}}
 const typing=()=>document.activeElement&&document.activeElement.tagName=="INPUT";
-async function push(){try{const r=await fetch(url,{method:"POST",body:JSON.stringify({at,days:S,budget:B,limit:LIM})});const j=await r.json();setStat(j.ok?"Synced ✓ "+new Date().toLocaleTimeString():"Save error")}catch(e){setStat("Offline – will retry")}}
+async function push(){try{const r=await fetch(url,{method:"POST",body:JSON.stringify({at,days:S,budget:B,limit:LIM,cats:CUS})});const j=await r.json();setStat(j.ok?"Synced ✓ "+new Date().toLocaleTimeString():"Save error")}catch(e){setStat("Offline – will retry")}}
 async function pull(f){if(!url){if(f===true)setUrl();else setStat("No sheet link");return}
 if(f!==true&&(busy||tm||typing()))return;busy=true;setStat("Checking…");
 try{const r=await fetch(url);const j=await r.json();
 if(!j.days){await push()}
-else if(j.at>at){S=j.days;if(Array.isArray(j.budget))B=j.budget;if(typeof j.limit=="number")LIM=j.limit;at=j.at;persist();render();setStat("Synced ✓ "+new Date().toLocaleTimeString())}
+else if(j.at>at){S=j.days;if(Array.isArray(j.budget))B=j.budget;if(typeof j.limit=="number")LIM=j.limit;if(Array.isArray(j.cats)){CUS=j.cats;rebuildCats()}at=j.at;persist();render();setStat("Synced ✓ "+new Date().toLocaleTimeString())}
 else if(j.at<at){await push()}
 else setStat("Synced ✓ "+new Date().toLocaleTimeString())}catch(e){setStat(navigator.onLine===false?"Offline – showing saved copy":"Sync failed: "+(e&&e.message||e))}busy=false}
 function setUrl(){openSheet("s-sync")}
@@ -301,30 +305,44 @@ if(td.moved){td.cur=Math.max(0,Math.min(td.pw,e.clientX-td.r.left-4-td.off));pil
 function tabEnd(e,cancel){if(!td)return;const d=td;td=null;pillEl.style.transition="";const b=cancel?view=="bd":d.moved?d.cur>d.pw/2:e.clientX-d.r.left>d.r.width/2;pillEl.style.transform="";
 document.getElementById("t-it").classList.toggle("on",!b);document.getElementById("t-bd").classList.toggle("on",b);tab(b?"bd":"it")}
 document.addEventListener("pointerup",e=>tabEnd(e,false));document.addEventListener("pointercancel",e=>tabEnd(e,true));
-const CATS=[["Food & drink","#e9a23b"],["Transport","#3b82c4"],["Accommodation","#8e5bd0"],["Activities","#2e9e5b"],["Shopping","#d64f8a"],["Other","#8a8f98"]];
+const BASE=[["Food & drink","#e9a23b"],["Transport","#3b82c4"],["Flights","#17a2b8"],["Accommodation","#8e5bd0"],["Activities","#2e9e5b"],["Shopping","#d64f8a"],["Other","#8a8f98"]],GREY=["Other","#8a8f98"],PAL=["#c0792b","#7a8f2e","#b04a6f","#4f6fb0","#8a5c3f","#3d9a8b"];
+let CATS=[...BASE],HID=[],noCat=0,cl=null;
+function rebuildCats(){CATS=[...BASE,...CUS.filter(c=>c&&c[0]&&!BASE.some(b=>b[0]==c[0]))]}
+try{CUS=JSON.parse(localStorage.getItem("bali-cats"))||[];rebuildCats();HID=JSON.parse(localStorage.getItem("bali-hid"))||[]}catch(e){}
 const f0=n=>Math.round(n).toLocaleString("en-US"),short=n=>n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?Math.round(n/1e3)+"k":String(Math.round(n)),sumA=a=>a.reduce((t,e)=>t+e.a,0);
 let bcur="IDR",bf="",xe=null,xc="Food & drink",sw=null,noSw=0;try{bcur=localStorage.getItem("bali-bcur")==="AUD"?"AUD":"IDR";LIM=+localStorage.getItem("bali-limit")||0}catch(e){}
 const cv=n=>bcur=="AUD"?n/rate:n,fc=n=>bcur=="AUD"?cv(n).toLocaleString("en-US",{maximumFractionDigits:2}):f0(n),money=n=>(bcur=="AUD"?"A$":"Rp ")+fc(n);
-const LINK=`<svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,CATC=k=>(CATS.find(c=>c[0]==k)||CATS[5])[1],dow=x=>x.toLocaleDateString("en-US",{weekday:"short"});
+const LINK=`<svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,CATC=k=>(CATS.find(c=>c[0]==k)||GREY)[1],dow=x=>x.toLocaleDateString("en-US",{weekday:"short"});
 function setCur(c){bcur=c;try{localStorage.setItem("bali-bcur",c)}catch(e){}render()}
 function setBf(k){bf=k;renderBudget()}
+function togCat(k){if(Date.now()-noCat<500)return;HID=HID.includes(k)?HID.filter(x=>x!=k):[...HID,k];try{localStorage.setItem("bali-hid",JSON.stringify(HID))}catch(e){}renderBudget()}
+function showAllCats(){HID=[];try{localStorage.setItem("bali-hid","[]")}catch(e){}renderBudget()}
+function delCat(k){if(!confirm("Delete the \""+k+"\" category? Its expenses move to Other."))return;CUS=CUS.filter(c=>c[0]!=k);rebuildCats();B.forEach(e=>{if(e.c==k)e.c="Other"});HID=HID.filter(x=>x!=k);try{localStorage.setItem("bali-hid",JSON.stringify(HID))}catch(e){}save();render()}
+const catChips=()=>CATS.map((c,k)=>`<button class="cc${c[0]==xc?" on":""}" onclick="pickCat(${k})"><span class="dot" style="background:${c[1]}"></span>${esc(c[0])}</button>`).join("")+'<button class="cc add" onclick="openCat()">+ New</button>';
+function openCat(){const e=document.getElementById("s-cat");e.innerHTML=`<div class="grab"></div><b>New category</b><label class="fl">Name</label><input type="text"${NA} id="c-n" placeholder="e.g. Gifts" onkeydown="if(event.key=='Enter')addCat()"><div class="acts"><button onclick="closeCat()">Cancel</button><button class="pri" onclick="addCat()">Add</button></div>`;document.getElementById("bk").classList.add("on");e.classList.add("open");setTimeout(()=>{const i=document.getElementById("c-n");if(i)i.focus()},350)}
+function closeCat(){document.getElementById("s-cat").classList.remove("open");if(![...document.querySelectorAll(".sheet.open")].length)document.getElementById("bk").classList.remove("on")}
+function addCat(){const n=document.getElementById("c-n").value.trim();if(!n)return;const ex=CATS.find(c=>c[0].toLowerCase()==n.toLowerCase());if(ex)xc=ex[0];else{CUS.push([n,PAL[CUS.length%PAL.length]]);rebuildCats();xc=n;save()}
+const c=document.getElementById("cats");if(c)c.innerHTML=catChips();closeCat();if(view=="bd")renderBudget()}
 function dayLbl(k){const d=S.find(d=>(d.date||d.d)==k);return d?d.d+" · "+d.date:k}
 function fabAdd(){view=="bd"?openExp():openM()}
-function renderBudget(){const g=x=>document.getElementById(x),f=bf,L=B.filter(e=>!f||e.d==f),tot=sumA(L),all=sumA(B);
+function renderBudget(){const g=x=>document.getElementById(x),f=bf,V=B.filter(e=>!HID.includes(e.c)),L=V.filter(e=>!f||e.d==f),tot=sumA(L),all=sumA(V),allC=[...CATS,...[...new Set(B.map(e=>e.c))].filter(n=>!CATS.some(c=>c[0]==n)).map(n=>[n,"#8a8f98"])];
 g("bc-IDR").classList.toggle("on",bcur=="IDR");g("bc-AUD").classList.toggle("on",bcur=="AUD");
-const ti=todayIdx(),tk=ti>=0?(S[ti].date||S[ti].d):null,td=tk?sumA(B.filter(e=>e.d==tk)):0,dn=new Set(B.map(e=>e.d)).size,avg=dn?all/dn:0;
-g("b-label").textContent=f?dayLbl(f):"Trip total";g("b-big").textContent=money(tot);
+const ti=todayIdx(),tk=ti>=0?(S[ti].date||S[ti].d):null,td=tk?sumA(V.filter(e=>e.d==tk)):0,dn=new Set(V.map(e=>e.d)).size,avg=dn?all/dn:0;
+g("b-label").textContent=(f?dayLbl(f):"Trip total")+(HID.length?" · filtered":"");g("b-big").textContent=money(tot);
 g("b-sub").textContent=B.length?(tk?"Today "+money(td)+" · ":"")+"Avg/day "+money(avg):"No spending yet";
 g("b-lim").innerHTML=LIM>0?`<div class="lim" onclick="openLim()"><div class="lbar"><i style="width:${Math.min(100,all/LIM*100)}%;background:${all>LIM?"#d64545":all>LIM*.8?"#e0a030":"#2e9e5b"}"></i></div><div class="lt"><span>${money(all)} of ${money(LIM)}</span><span>${all>LIM?money(all-LIM)+" over":money(LIM-all)+" left"}</span></div></div>`:`<button class="ghost" onclick="openLim()">Set trip limit</button>`;
 g("b-chips").innerHTML=`<button class="chip${f?"":" on"}" onclick="setBf('')"><b>Trip</b></button>`+S.map((d,i)=>{const x=dayDate(d),k=d.date||d.d;return `<button class="chip${k==f?" on":""}" data-k="${esc(k)}" onclick="setBf(this.dataset.k)">${x?`<small>${dow(x)}</small><b>${x.getDate()}</b>`:`<b>D${i+1}</b>`}</button>`}).join("");
+g("b-cats").innerHTML=`<div class="cxr">${allC.map(c=>`<button class="cx${HID.includes(c[0])?" off":""}" data-k="${esc(c[0])}"${CUS.some(u=>u[0]==c[0])?" data-cust=1":""} onclick="togCat(this.dataset.k)"><span class="dot" style="background:${c[1]}"></span>${esc(c[0])}</button>`).join("")}<button class="cx add" onclick="openCat()">+ New</button>${HID.length?'<button class="cx add" onclick="showAllCats()">Show all</button>':""}</div><div class="capt">Tap a category to show or hide it${CUS.length?" · hold a custom one to delete":""}</div>`;
 if(!B.length){g("b-sum").innerHTML=`<div class="empty2"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.2C14 8.4 13.1 8 12 8c-1.4 0-2.5.7-2.5 1.8 0 2.6 5 1.4 5 4 0 1.1-1.1 1.8-2.5 1.8-1.1 0-2-.4-2.5-1.2M12 6.5V8M12 16v1.5"/></svg><b>No expenses yet</b><small>Tap + to add your first one, or use an entry's sheet to log spending against it.</small></div>`;g("b-days").innerHTML="";g("b-list").innerHTML="";return}
-const ct=CATS.map(c=>[c[0],c[1],sumA(L.filter(e=>e.c==c[0]))]).filter(c=>c[2]>0);let acc=0;
+if(!V.length){g("b-sum").innerHTML=`<div class="empty2"><b>Nothing to show</b><small>Every category with spending is hidden.</small><button onclick="showAllCats()">Show all categories</button></div>`;g("b-days").innerHTML="";g("b-list").innerHTML="";return}
+const ct=allC.map(c=>[c[0],c[1],sumA(L.filter(e=>e.c==c[0]))]).filter(c=>c[2]>0);let acc=0;
 const stops=tot?ct.map(c=>{const a=acc;acc+=c[2]/tot*100;return `${c[1]} ${a}% ${acc}%`}).join(","):"var(--ln) 0% 100%";
 g("b-sum").innerHTML=tot?`<div style="display:flex;gap:16px;align-items:center"><div class="donut" style="background:conic-gradient(${stops})"><div>${short(cv(tot))}</div></div><div style="flex:1;min-width:0">${ct.map(c=>`<div class="lg"><span class="dot" style="background:${c[1]}"></span>${esc(c[0])}<b>${fc(c[2])}</b></div>`).join("")}</div></div>`:`<div class="sub">Nothing spent on this day.</div>`;
-const dt=S.map(d=>{const k=d.date||d.d;return {k,d,e:B.filter(e=>e.d==k)}}),mx=Math.max(1,...dt.map(x=>sumA(x.e)));
-g("b-days").innerHTML=`<div class="sub" style="margin-bottom:6px">Per day · tap a bar to filter</div><div class="bw"><div class="chart">${dn>1?`<div class="avg" style="bottom:${avg/mx*110}px"><span>avg</span></div>`:""}${dt.map(x=>{const t=sumA(x.e),sel=x.k==f;return `<div class="bc${f&&!sel?" dim":""}" data-k="${esc(x.k)}" onclick="setBf(this.dataset.k==bf?'':this.dataset.k)"><small class="ba">${sel&&t?short(cv(t)):""}</small><div class="st">${CATS.map(c=>{const v=sumA(x.e.filter(e=>e.c==c[0]));return v?`<i style="height:${Math.max(2,v/mx*110)}px;background:${c[1]}"></i>`:""}).join("")}</div></div>`}).join("")}</div><div class="bl">${dt.map(x=>{const dd=dayDate(x.d);return `<div class="bln">${dd?dow(dd)+"<br>"+dd.getDate():"–"}</div>`}).join("")}</div></div>`;
+const dt=S.map(d=>{const k=d.date||d.d;return {k,d,e:V.filter(e=>e.d==k)}}),mx=Math.max(1,...dt.map(x=>sumA(x.e)));
+g("b-days").innerHTML=`<div class="sub" style="margin-bottom:6px">Per day · tap a bar to filter</div><div class="bw"><div class="chart">${dn>1?`<div class="avg" style="bottom:${avg/mx*110}px"><span>avg</span></div>`:""}${dt.map(x=>{const t=sumA(x.e),sel=x.k==f;return `<div class="bc${f&&!sel?" dim":""}" data-k="${esc(x.k)}" onclick="setBf(this.dataset.k==bf?'':this.dataset.k)"><small class="ba">${sel&&t?short(cv(t)):""}</small><div class="st">${allC.map(c=>{const v=sumA(x.e.filter(e=>e.c==c[0]));return v?`<i style="height:${Math.max(2,v/mx*110)}px;background:${c[1]}"></i>`:""}).join("")}</div></div>`}).join("")}</div><div class="bl">${dt.map(x=>{const dd=dayDate(x.d);return `<div class="bln">${dd?dow(dd)+"<br>"+dd.getDate():"–"}</div>`}).join("")}</div></div>`;
 const order=k=>{const i=S.findIndex(d=>(d.date||d.d)==k);return i<0?999:i},keys=[...new Set(L.map(e=>e.d))].sort((a,b)=>order(a)-order(b));
-g("b-list").innerHTML=keys.map(k=>{const rows=L.filter(e=>e.d==k);return `<div class="gh"><span>${esc(dayLbl(k))}</span><span>${money(sumA(rows))}</span></div>`+rows.map(e=>`<div class="sw"><div class="sw-del"><button data-id="${esc(e.id)}" onclick="delX(this.dataset.id)">Delete</button></div><div class="er" onclick="rowX(event,'${esc(e.id)}')"><span class="dot" style="background:${CATC(e.c)}"></span><div class="ex"><div>${esc(e.x)}</div><small>${esc(e.c)}</small></div>${e.ref?`<button class="ib" onclick="event.stopPropagation();jumpX('${esc(e.id)}')" aria-label="Go to entry" title="Go to entry">${LINK}</button>`:""}<b>${fc(e.a)}</b></div></div>`).join("")}).join("")||'<div class="sub">Nothing spent on this day.</div>'}
+const pos={},ent={};S.forEach(d=>d.items.forEach((it,j)=>{if(it.id){pos[it.id]=j;ent[it.id]=it}}));const bi=new Map(B.map((e,n)=>[e.id,n])),pk=e=>e.ref&&pos[e.ref]!=null?pos[e.ref]:9999,cmp=(a,b)=>(pk(a)-pk(b))||(bi.get(a.id)-bi.get(b.id));
+g("b-list").innerHTML=keys.map(k=>{const rows=L.filter(e=>e.d==k).sort(cmp);return `<div class="gh"><span>${esc(dayLbl(k))}</span><span>${money(sumA(rows))}</span></div>`+rows.map(e=>`<div class="sw"><div class="sw-del"><button data-id="${esc(e.id)}" onclick="delX(this.dataset.id)">Delete</button></div><div class="er" onclick="rowX(event,'${esc(e.id)}')"><span class="dot" style="background:${CATC(e.c)}"></span><div class="ex"><div>${esc(e.x)}</div><small>${esc(e.c)}${ent[e.ref]?" · "+esc(ent[e.ref].t)+" "+esc(ent[e.ref].x):""}</small></div>${e.ref?`<button class="ib" onclick="event.stopPropagation();jumpX('${esc(e.id)}')" aria-label="Go to entry" title="Go to entry">${LINK}</button>`:""}<b>${fc(e.a)}</b></div></div>`).join("")}).join("")||'<div class="sub">Nothing spent on this day.</div>'}
 function rowX(e,id){if(Date.now()-noSw<350)return;const r=e.currentTarget;if(r.classList.contains("open")){r.style.transform="";r.classList.remove("open");return}openExp(id)}
 function delX(id){B=B.filter(e=>e.id!=id);save();render()}
 function jumpX(id){const e=B.find(x=>x.id==id);if(!e)return;for(let i=0;i<S.length;i++){const j=S[i].items.findIndex(it=>it.id&&it.id===e.ref);if(j>=0){tab("it");setTimeout(()=>{goDay(i);openEntry(i,j)},420);return}}}
@@ -332,7 +350,7 @@ function openExp(id){xe=id||null;const e=id?B.find(x=>x.id==id):null;xc=e?e.c:"F
 document.getElementById("s-exp").innerHTML=`<div class="grab"></div><b>${e?"Edit expense":"Add expense"}</b>
 <label class="fl">Description</label><input type="text"${NA} id="x-x" value="${e?esc(e.x):""}" placeholder="e.g. Nasi goreng" onkeydown="if(event.key=='Enter')document.getElementById('x-a').focus()">
 <label class="fl">Amount</label><div class="row"><input type="text"${NA} inputmode="decimal" id="x-a" value="${e?e.a:""}" placeholder="0" style="margin:0" onkeydown="if(event.key=='Enter')saveX()"><select id="x-u" style="flex:none;margin:0"><option>IDR</option><option>AUD</option></select></div>
-<label class="fl">Category</label><div class="cats">${CATS.map((c,k)=>`<button class="cc${c[0]==xc?" on":""}" onclick="pickCat(${k})"><span class="dot" style="background:${c[1]}"></span>${esc(c[0])}</button>`).join("")}</div>
+<label class="fl">Category</label><div class="cats" id="cats">${catChips()}</div>
 ${e&&e.ref?'<div class="sub" style="margin-top:12px">Linked to an itinerary entry</div>':`<label class="fl">Day</label><select id="x-d">${S.map(d=>`<option value="${esc(d.date||d.d)}"${(d.date||d.d)==dk?" selected":""}>${esc(d.d)} · ${esc(d.date)}</option>`).join("")}</select>`}
 <div class="acts">${e?`<button class="ib" onclick="delX(xe);closeSheets()" aria-label="Delete expense" title="Delete">${TRASH}</button>`:""}<button class="pri" onclick="saveX()">${e?"Save":"Add"}</button></div>`;
 openSheet("s-exp");if(!e)setTimeout(()=>{const i=document.getElementById("x-x");if(i)i.focus()},350)}
@@ -341,6 +359,9 @@ function saveX(){const a=num(document.getElementById("x-a").value);if(!(a>0))ret
 if(old){old.x=desc||xc;old.c=xc;old.a=idr;old.d=d}else B.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),d,x:desc||xc,c:xc,a:idr});save();closeSheets()}
 function openLim(){document.getElementById("s-lim").innerHTML=`<div class="grab"></div><b>Trip limit</b><label class="fl">Total budget for the trip</label><div class="row"><input type="text"${NA} inputmode="decimal" id="l-a" value="${LIM?f0(LIM):""}" placeholder="Amount" style="margin:0"><select id="l-u" style="flex:none;margin:0"><option>IDR</option><option>AUD</option></select></div><div class="acts">${LIM?'<button onclick="setLim(0)">Remove limit</button>':""}<button class="pri" onclick="setLim()">Save</button></div>`;openSheet("s-lim")}
 function setLim(z){let v=0;if(z!==0){const a=num(document.getElementById("l-a").value);v=Math.round(document.getElementById("l-u").value=="AUD"?a*rate:a)}LIM=v;save();closeSheets()}
+const bcEl=document.getElementById("b-cats");
+bcEl.addEventListener("pointerdown",e=>{const c=e.target.closest&&e.target.closest("[data-cust]");if(!c)return;clearTimeout(cl);cl=setTimeout(()=>{cl=null;noCat=Date.now();delCat(c.dataset.k)},650)});
+["pointerup","pointercancel","pointermove"].forEach(t=>document.addEventListener(t,()=>{if(cl){clearTimeout(cl);cl=null}}));
 const bl=document.getElementById("b-list");
 bl.addEventListener("pointerdown",e=>{const r=e.target.closest&&e.target.closest(".er");if(!r||e.target.closest("button"))return;bl.querySelectorAll(".er.open").forEach(x=>{if(x!==r){x.style.transform="";x.classList.remove("open")}});sw={r,x:e.clientX,y:e.clientY,base:r.classList.contains("open")?-84:0,moved:false,cur:0}});
 document.addEventListener("pointermove",e=>{if(!sw)return;const dx=e.clientX-sw.x,dy=e.clientY-sw.y;if(!sw.moved){if(Math.abs(dx)>10&&Math.abs(dx)>Math.abs(dy)){sw.moved=true;sw.r.style.transition="none"}else return}
@@ -368,12 +389,12 @@ addEventListener("online",loadWx);
 const NA=' autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="done"';
 const uid=it=>it.id||(it.id=Math.random().toString(36).slice(2,9));
 const DOTS=`<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg>`,CHEV=`<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>`,NAV=`<svg viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>`,UPI=`<svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>`,DNI=`<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>`,TRASH=`<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,XIC=`<svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
-const guessCat=t=>/breakfast|lunch|dinner|dessert|cafe|coffee|restaurant|warung|skewer|food|drink|bakery|bakehouse/i.test(t)?"Food & drink":/fly|flight|travel|taxi|car|transfer|airport/i.test(t)?"Transport":/check-?in|hotel|inn|stay/i.test(t)?"Accommodation":/spa|waterfall|beach|temple|dance|surf|walk|market|pottery|cycling|terrace|cave|club|tour|pool/i.test(t)?"Activities":"Food & drink";
+const guessCat=t=>/breakfast|lunch|dinner|dessert|cafe|coffee|restaurant|warung|skewer|food|drink|bakery|bakehouse/i.test(t)?"Food & drink":/fly|flight|airport|jetstar|qantas|batik|\bqf\d+|\bjq\d+|\bid\d+/i.test(t)?"Flights":/travel|taxi|\bcar\b|transfer|drive|grab|gojek/i.test(t)?"Transport":/check-?in|hotel|inn|stay/i.test(t)?"Accommodation":/spa|waterfall|beach|temple|dance|surf|walk|market|pottery|cycling|terrace|cave|club|tour|pool/i.test(t)?"Activities":"Food & drink";
 let es=null,ds=null,COL={};try{COL=JSON.parse(localStorage.getItem("bali-col"))||{}}catch(e){}
 function isFold(i){const d=S[i],k=d.date||d.d;if(k in COL)return COL[k];const x=dayDate(d);return !!(x&&x<today0())&&i!=todayIdx()}
 function foldDay(i){const d=S[i];COL[d.date||d.d]=!isFold(i);try{localStorage.setItem("bali-col",JSON.stringify(COL))}catch(e){}render()}
 const amt=a=>(bcur=="AUD"?"A$":"Rp ")+fc(a);
-function pillsHtml(it){const h=B.filter(e=>e.ref&&e.ref===it.id).map(e=>`<span class="xp"><span class="dot" style="background:${(CATS.find(c=>c[0]==e.c)||CATS[5])[1]}"></span>${e.x&&e.x!==it.x?`<span class="xl2">${esc(e.x)}</span>`:""}<b>${amt(e.a)}</b></span>`).join("");return h?`<div class="xps">${h}</div>`:""}
+function pillsHtml(it){const h=B.filter(e=>e.ref&&e.ref===it.id).map(e=>`<span class="xp"><span class="dot" style="background:${(CATS.find(c=>c[0]==e.c)||GREY)[1]}"></span>${e.x&&e.x!==it.x?`<span class="xl2">${esc(e.x)}</span>`:""}<b>${amt(e.a)}</b></span>`).join("");return h?`<div class="xps">${h}</div>`:""}
 const dirLink=(p,a)=>"https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(p+" "+a);
 function renderNow(){const el=document.getElementById("now");if(!el)return;const ti=todayIdx(),nw=new Date(),m=nw.getHours()*60+nw.getMinutes();let h="";
 if(ti>=0){const d=S[ti],nx=d.items.map(it=>({it,q:tmin(it.t)})).find(o=>!o.it.b&&o.q!=null&&o.q>=m);
@@ -384,7 +405,7 @@ else{const n=today0(),fi=S.findIndex(d=>{const x=dayDate(d);return x&&x>n});if(f
 el.innerHTML=h}
 function rowTap(e,i,j){if((e.target.closest&&e.target.closest("a"))||Date.now()-noClick<350)return;openEntry(i,j)}
 function openSheet(id){document.getElementById("bk").classList.add("on");document.getElementById(id).classList.add("open");if(id=="s-sync")document.getElementById("u").value=url}
-function closeSheets(){if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();document.getElementById("bk").classList.remove("on");["s-entry","s-day","s-sync","s-exp","s-lim"].forEach(x=>document.getElementById(x).classList.remove("open"));es=ds=null;render()}
+function closeSheets(){if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();document.getElementById("bk").classList.remove("on");["s-entry","s-day","s-sync","s-exp","s-lim","s-cat"].forEach(x=>document.getElementById(x).classList.remove("open"));es=ds=null;render()}
 function openEntry(i,j){uid(S[i].items[j]);es=[i,j];renderEntry();openSheet("s-entry")}
 const cur=()=>S[es[0]].items[es[1]];
 function renderEntry(){const it=cur(),g=notes(it),ex=B.filter(e=>e.ref===it.id),cg=guessCat(it.x);
@@ -392,7 +413,7 @@ document.getElementById("s-entry").innerHTML=`<div class="grab"></div>
 <div class="row"><input type="text"${NA} value="${esc(it.t)}" placeholder="Time" style="width:96px;flex:none;margin:0" oninput="eSet('t',this.value)"><input type="text"${NA} value="${esc(it.x)}" placeholder="Activity" style="margin:0" oninput="eSet('x',this.value)"></div>
 <label class="fl">Places · become map links</label><input type="text"${NA} value="${esc(it.p.join(", "))}" placeholder="Comma separated" oninput="eSet('p',this.value)">
 <label class="fl">Notes</label>${g.map((t,k)=>`<div class="row"><input type="text"${NA} value="${esc(t)}" placeholder="Note" oninput="eNote(${k},this.value)"><button class="ib" onclick="eNoteDel(${k})" aria-label="Remove note">${XIC}</button></div>`).join("")}<button class="ghost" onclick="eNoteAdd()">+ Add note</button>
-<label class="fl">Expenses</label>${ex.map(e=>`<div class="er"><span class="dot" style="background:${(CATS.find(c=>c[0]==e.c)||CATS[5])[1]}"></span><div class="ex"><div>${esc(e.x)}</div><small>${esc(e.c)}</small></div><b>${amt(e.a)}</b><button class="ib" data-id="${esc(e.id)}" onclick="eExpDel(this.dataset.id)" aria-label="Remove expense">${XIC}</button></div>`).join("")}
+<label class="fl">Expenses</label>${ex.map(e=>`<div class="er"><span class="dot" style="background:${(CATS.find(c=>c[0]==e.c)||GREY)[1]}"></span><div class="ex"><div>${esc(e.x)}</div><small>${esc(e.c)}</small></div><b>${amt(e.a)}</b><button class="ib" data-id="${esc(e.id)}" onclick="eExpDel(this.dataset.id)" aria-label="Remove expense">${XIC}</button></div>`).join("")}
 <div class="ef" style="margin-top:6px"><input type="text"${NA} id="ef-x" placeholder="Description (e.g. Nasi goreng)" onkeydown="if(event.key=='Enter')document.getElementById('ef-a').focus()"><input type="text"${NA} inputmode="decimal" id="ef-a" placeholder="Amount" onkeydown="if(event.key=='Enter')saveEfx()"><select id="ef-u" style="flex:none;min-width:70px"><option>IDR</option><option>AUD</option></select><select id="ef-c">${CATS.map(c=>`<option${c[0]==cg?" selected":""}>${esc(c[0])}</option>`).join("")}</select><button class="pri" onclick="saveEfx()">Add</button></div>
 <label class="tgl"><input type="checkbox" ${it.b?"checked":""} onchange="eSet('b',this.checked?1:0)"> Backup plan</label>
 <div class="acts"><button class="ib" onclick="eMove(-1)" aria-label="Move up" title="Move up">${UPI}</button><button class="ib" onclick="eMove(1)" aria-label="Move down" title="Move down">${DNI}</button><button class="ib" onclick="eDel()" aria-label="Delete entry" title="Delete entry">${TRASH}</button><button class="pri" onclick="closeSheets()">Done</button></div>`}
